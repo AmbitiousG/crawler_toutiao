@@ -1,8 +1,7 @@
 const request = require("request");
 const {getHoney, getSignature} = require("./utils");
 const _ = require("lodash");
-const mongoose = require('mongoose');
-const dbConfig = require('./db-config.json');
+const conn = require('./db');
 
 const getArticles = () => {
     const {as, cp} = getHoney();
@@ -11,15 +10,8 @@ const getArticles = () => {
         const ret = JSON.parse(body);
         console.log(_.map(ret.data, 'title'));
 
-        mongoose.connect(dbConfig.server + '/toutiao', {
-            user: dbConfig.user,
-            pass: dbConfig.pwd,
-        });
-        const db = mongoose.connection;
-        db.on('error', console.error.bind(console, 'connection error:'))
-        db.on('open', () => {
-            console.log('ggc mongodb connected!')
-        })
+        setTimeout(() => conn.close(), 2000)
+        console.log({conn})
     })
 }
 
