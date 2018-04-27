@@ -1,16 +1,46 @@
+const _ = require('lodash');
 const mongoose = require('mongoose');
-const dbConfig = require('../db-config.json');
 
-mongoose.connect(dbConfig.server + '/toutiao', {
-    user: dbConfig.user,
-    pass: dbConfig.pwd,
-});
+const dbConfig = require('../db-config.json');
+const {Article, Image, Label} = require('./schema');
+
 // console.log({db: db.connection.close,})
 const conn = mongoose.connection;
-conn.on('error', console.error.bind(console, 'connection error:'))
-conn.on('open', () => {
-    console.log('ggc mongodb connected!')
-});
-conn.on('disconnected', () => console.log('disconnected from ggc!'));
 
-module.exports = conn;
+const saveArticles = async function(articles) {
+    if(!_.isPlainObject(articles)){
+        articles = _.map(articles, a => ({
+            ...a,
+            label: _.map(a.label, l => ({label: l}))
+        }));
+    }
+    try{
+        return await Article.create(articles);
+    }
+    catch(err) {
+
+    }
+}
+
+const getArticles = function() {
+    return Article.find({}).exec();
+}
+
+module.exports = {
+    conn: function(cb) {
+        mongoose.connect(dbConfig.server + '/' + dbConfig.db, {
+            user: dbConfig.user,
+            pass: dbConfig.pwd,
+        });
+        conn.on('error', console.error.bind(console, 'connection error:'))
+        conn.on('disconnected', () => console.log('disconnected from ggc!'));
+        conn.on('open', () => {
+            console.log('ggc connected!');
+            cb && cb();
+            // console.log(Article.find({}).exec(arr => console.log(arr)))
+        });
+    },
+    connInstance: conn,
+    saveArticles,
+    getArticles
+};
