@@ -8,7 +8,7 @@ const {Article, Image, Label} = require('./schema');
 const conn = mongoose.connection;
 
 const saveArticles = async function(articles, category) {
-    console.log({category, length: articles.length, titles: _.map(articles, 'title')});
+    console.log(articles.length);
     if(!_.isPlainObject(articles)){
         articles = _.map(articles, a => ({
             ...a,
@@ -16,10 +16,10 @@ const saveArticles = async function(articles, category) {
         }));
     }
     try{
-        // return await Article.create(articles);
+        return await Article.create(articles);
     }
     catch(err) {
-
+        console.error(err);
     }
 }
 

@@ -3,28 +3,32 @@ const request = require('request');
 const { getHoney, getSignature, timeout } = require("./utils");
 const { conn, connInstance, saveArticles, getArticles } = require('./db');
 
+const Max_Length = 50;
+const Request_Interval = 1000;
+
 const categories = [
     'news_tech',
-    // 'news_entertainment',
-    // 'news_game',
-    // 'news_sports',
-    // 'news_car',
-    // 'news_finance',
-    // 'funny',
-    // 'news_world',
-    // 'news_fashion',
-    // 'news_travel',
-    // 'news_discovery',
-    // 'news_baby',
-    // 'news_regimen',
-    // 'news_essay',
-    // 'news_history',
-    // 'news_food'
+    'news_entertainment',
+    'news_game',
+    'news_sports',
+    'news_car',
+    'news_finance',
+    'funny',
+    'news_world',
+    'news_fashion',
+    'news_travel',
+    'news_discovery',
+    'news_baby',
+    'news_regimen',
+    'news_essay',
+    'news_history',
+    'news_food'
 ];
 
-const generateUrl = (category, max_behot_time = 0) => {
+const generateUrl = (category, max_behot_time, isRefresh) => {
     const { as, cp } = getHoney();
-    return `https://www.toutiao.com/api/pc/feed/?category=${category}&utm_source=toutiao&widen=1&max_behot_time=0&max_behot_time_tmp=${max_behot_time}&tadrequire=true&tadrequire=true&as=${as}&cp=${cp}&_signature=${getSignature(max_behot_time)}`;
+    const max_b_t = isRefresh ? 0 : max_behot_time;
+    return `https://www.toutiao.com/api/pc/feed/?category=${category}&utm_source=toutiao&widen=1&max_behot_time=${max_b_t}&max_behot_time_tmp=${max_behot_time}&tadrequire=true&as=${as}&cp=${cp}&_signature=${getSignature(max_b_t)}`;
 }
 
 const startSingleRequest = url => {
@@ -47,34 +51,58 @@ const startSingleRequest = url => {
 //     return await startSingleRequest(url);
 // } 
 
-const startRecursiveRequest = async (category, tempData, max_behot_time = 0) => {
-    const url = generateUrl(category, max_behot_time);
-    try {
-        const retData = await startSingleRequest(url);
-        max_behot_time = retData.next.max_behot_time;
-        const articles = retData.data;
-        const combined = _.concat(tempData, _.filter(articles, a => !_.some(tempData, { item_id: a.item_id })));
-        if (combined.length < 10){
-            timeout(100);
-            return await startRecursiveRequest(category, combined, max_behot_time);
+const getArticlesForSave = async (category) => {
+    let tempData = [];
+    let count = 0;
+    let isRefresh = true;
+    const startRecursiveRequest = async (category, temp = [], max_behot_time = 0) => {
+        count == 4 && (count = 0);
+        isRefresh = count == 0;
+        const url = generateUrl(category, max_behot_time, isRefresh);
+        console.log(url);
+        try {
+            count++;
+            const retData = await startSingleRequest(url);
+            if(!retData.next)
+                return temp;
+            max_behot_time = retData.next.max_behot_time;
+            const articles = retData.data;
+            const combined = _.concat(temp, _.filter(articles, a => !_.some(temp, { item_id: a.item_id })));
+            if (combined.length < Max_Length){
+                await timeout(Request_Interval);
+                return await startRecursiveRequest(category, combined, max_behot_time)
+            }
+            else
+                return combined;
+    
         }
-        else
-            return combined;
-        // await saveArticles(retData.data);
+        catch (e) {
+            console.error(category, e);
+            return temp;
+        }
+    }
 
-    }
-    catch (e) {
-        return tempData;
-    }
+    tempData = await startRecursiveRequest(category, [], 0);
+    return tempData;
 }
 
 const startCrawlers = async () => {
+    let tempData = [];
     while(true) {
-        timeout(100);
-        await Promise.all(_.map(categories, async c => {
-            const tempData = await startRecursiveRequest(c, []);
-            await saveArticles(tempData, c);
-        }));
+        console.log('while');
+        try{
+            await timeout(Request_Interval);
+            for(var i = 0; i < categories.length; i++){
+                tempData = [];
+                await timeout(Request_Interval);
+                tempData = await getArticlesForSave(categories[i]);
+                // await saveArticles(tempData, c);
+                console.log(categories[i], tempData.length);
+            }
+        }
+        catch(e){
+            console.error(e);
+        }
     }
 }
 
