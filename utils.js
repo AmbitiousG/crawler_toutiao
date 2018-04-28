@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const _ = require('lodash');
 
 let TAC = null;
 global.navigator = {
@@ -13,6 +14,8 @@ Function(function(t) {
 const timeout = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+const random = (max = 1500, min = 500) => _.random(min, max);
 
 module.exports = {
     getHoney() {
@@ -37,5 +40,6 @@ module.exports = {
     getSignature(max_behot_time = 0) {
         return TAC.sign && TAC.sign(max_behot_time);
     },
-    timeout
+    timeout,
+    random
 }

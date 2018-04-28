@@ -1,10 +1,11 @@
 const _ = require('lodash');
 const request = require('request');
-const { getHoney, getSignature, timeout } = require("./utils");
-const { conn, connInstance, saveArticles, getArticles } = require('./db');
+const { getHoney, getSignature, timeout, random } = require("./utils");
+const { saveArticles } = require('./db');
 
-const Max_Length = 50;
-const Request_Interval = 1000;
+const Max_Length = 10;
+const Request_Interval_Max = 1500;
+const Request_Interval_Min = 500;
 
 const categories = [
     'news_tech',
@@ -56,20 +57,22 @@ const getArticlesForSave = async (category) => {
     let count = 0;
     let isRefresh = true;
     const startRecursiveRequest = async (category, temp = [], max_behot_time = 0) => {
-        count == 4 && (count = 0);
+        count == 3 && (count = 0);
         isRefresh = count == 0;
         const url = generateUrl(category, max_behot_time, isRefresh);
-        console.log(url);
         try {
             count++;
             const retData = await startSingleRequest(url);
             if(!retData.next)
                 return temp;
             max_behot_time = retData.next.max_behot_time;
-            const articles = retData.data;
+            const articles = _(retData.data).map(a => ({
+                ...a,
+                middle_image: _.isPlainObject(a.middle_image) ? a.middle_image.url : a.middle_image
+            })).filter({is_feed_ad: false}).value();
             const combined = _.concat(temp, _.filter(articles, a => !_.some(temp, { item_id: a.item_id })));
             if (combined.length < Max_Length){
-                await timeout(Request_Interval);
+                await timeout(random(Request_Interval_Min, Request_Interval_Max));
                 return await startRecursiveRequest(category, combined, max_behot_time)
             }
             else
@@ -89,15 +92,14 @@ const getArticlesForSave = async (category) => {
 const startCrawlers = async () => {
     let tempData = [];
     while(true) {
-        console.log('while');
         try{
-            await timeout(Request_Interval);
             for(var i = 0; i < categories.length; i++){
                 tempData = [];
-                await timeout(Request_Interval);
+                await timeout(random(Request_Interval_Min, Request_Interval_Max));
+                console.log(`Start fetch ${categories[i]} data...`);
                 tempData = await getArticlesForSave(categories[i]);
-                // await saveArticles(tempData, c);
-                console.log(categories[i], tempData.length);
+                tempData.length > 0 && await saveArticles(tempData);
+                console.log(`Fetch ${categories[i]} finish, total count: ${tempData.length}`);
             }
         }
         catch(e){
