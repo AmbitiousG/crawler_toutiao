@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-const arrayUniquePlugin = require('mongoose-unique-array');
-
 
 const imageSchema = new mongoose.Schema({
     url: String
@@ -21,7 +19,7 @@ const articleSchema = new mongoose.Schema({
     group_id: String,
     group_source: Number,
     has_gallery: Boolean,
-    image_list: [imageSchema],
+    image_list: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
     image_url: String,
     is_feed_ad: Boolean,
     item_id: {
@@ -29,7 +27,7 @@ const articleSchema = new mongoose.Schema({
         unique: true,
         index: true,
     },
-    label: [labelSchema],
+    label: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Label' }],
     media_avatar_url: String,
     media_url: String,
     middle_image: String,
@@ -41,9 +39,6 @@ const articleSchema = new mongoose.Schema({
     tag_url: String,
     title: String
 });
-
-labelSchema.plugin(arrayUniquePlugin);
-articleSchema.plugin(arrayUniquePlugin);
 
 const Article = mongoose.model('Article', articleSchema);
 const Image = mongoose.model('Image', articleSchema);
