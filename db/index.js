@@ -46,15 +46,15 @@ const saveArticles = async function (articles, category) {
     }
 }
 
-const getArticles = function () {
-    return Article.find({}).exec();
+const getArticles = function (category) {
+    return Article.find({tag_url: category}).populate('label').limit(10).exec();
 }
 
 module.exports = {
-    conn: function (cb) {
+    conn: function (cb, isReadonly = false) {
         mongoose.connect(dbConfig.server + '/' + dbConfig.db, {
-            user: dbConfig.user,
-            pass: dbConfig.pwd,
+            user: isReadonly ? dbConfig.readonly_user : dbConfig.user,
+            pass: isReadonly ? dbConfig.readonly_pwd : dbConfig.pwd,
         });
         conn.on('error', console.error.bind(console, 'connection error:'))
         conn.on('disconnected', () => console.log('disconnected from ggc!'));

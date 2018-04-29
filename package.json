@@ -8,6 +8,9 @@
   "dependencies": {
     "babel-cli": "^6.26.0",
     "cheerio": "^1.0.0-rc.2",
+    "koa": "^2.5.1",
+    "koa-logger": "^3.2.0",
+    "koa-router": "^7.4.0",
     "lodash": "^4.17.10",
     "mongoose": "^5.0.16",
     "request": "^2.85.0"
