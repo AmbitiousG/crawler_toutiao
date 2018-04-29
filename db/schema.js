@@ -1,9 +1,5 @@
 const mongoose = require('mongoose');
 
-const imageSchema = new mongoose.Schema({
-    url: String
-});
-
 const labelSchema = new mongoose.Schema({
     label: {
         type: String,
@@ -19,7 +15,7 @@ const articleSchema = new mongoose.Schema({
     group_id: String,
     group_source: Number,
     has_gallery: Boolean,
-    image_list: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
+    image_list: [{ url: String }],
     image_url: String,
     is_feed_ad: Boolean,
     item_id: {
@@ -41,9 +37,8 @@ const articleSchema = new mongoose.Schema({
 });
 
 const Article = mongoose.model('Article', articleSchema);
-const Image = mongoose.model('Image', articleSchema);
 const Label = mongoose.model('Label', labelSchema);
 
 module.exports = {
-    Article, Image, Label
+    Article, Label
 };

@@ -3,9 +3,9 @@ const request = require('request');
 const { getHoney, getSignature, timeout, random } = require("./utils");
 const { saveArticles } = require('./db');
 
-const Max_Length = 10;
-const Request_Interval_Max = 1500;
-const Request_Interval_Min = 500;
+const Max_Length = 50;
+const Request_Interval_Max = 1800;
+const Request_Interval_Min = 800;
 
 const categories = [
     'news_tech',
