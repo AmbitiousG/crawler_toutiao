@@ -12,10 +12,11 @@ const router = new Router({
 });
 
 const getCategoryData = async (ctx, next) => {
-    const { category } = ctx.params;
-    let articles = await getArticles(category);
+    const { category, nextId = 0 } = ctx.params;
+    let articles = await getArticles(category, nextId);
     articles = _.map(articles, a => {
-        const parsed = _.omit(a.toJSON(), '_id');
+        // const parsed = _.omit(a.toJSON(), '_id');
+        const parsed = a.toJSON();
         return {
             ...parsed,
             label: _.map(parsed.label, 'label')
@@ -26,7 +27,8 @@ const getCategoryData = async (ctx, next) => {
 
 app.use(logger());
 
-router.get('/:category', getCategoryData);
+router.get('/:category', getCategoryData)
+router.get('/:category/:nextId', getCategoryData);
 
 app.use(router.routes());
 

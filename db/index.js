@@ -46,8 +46,16 @@ const saveArticles = async function (articles, category) {
     }
 }
 
-const getArticles = function (category) {
-    return Article.find({tag_url: category}).populate('label').limit(10).exec();
+const getArticles = function (category, nextId = 0) {
+    let options = {
+        tag_url: category
+    };
+    if(nextId !== 0){
+        _.assign(options, {item_id: {$lt: nextId}});
+    }
+    return Article.find(options, {
+        _id: 0
+    }).sort({item_id: -1}).populate('label').limit(10).exec();
 }
 
 module.exports = {
