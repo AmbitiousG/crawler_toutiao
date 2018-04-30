@@ -2,10 +2,7 @@ const _ = require('lodash');
 const request = require('request');
 const { getHoney, getSignature, timeout, random } = require("./utils");
 const { saveArticles } = require('./db');
-
-const Max_Length = 50;
-const Request_Interval_Max = 1800;
-const Request_Interval_Min = 800;
+const { Max_Length = 50, Request_Interval_Max = 5000, Request_Interval_Min = 2000 } = require('./fetch-config');
 
 const categories = [
     'news_tech',
@@ -63,21 +60,21 @@ const getArticlesForSave = async (category) => {
         try {
             count++;
             const retData = await startSingleRequest(url);
-            if(!retData.next)
+            if (!retData.next)
                 return temp;
             max_behot_time = retData.next.max_behot_time;
             const articles = _(retData.data).map(a => ({
                 ...a,
                 middle_image: _.isPlainObject(a.middle_image) ? a.middle_image.url : a.middle_image
-            })).filter({is_feed_ad: false}).value();
+            })).filter({ is_feed_ad: false }).value();
             const combined = _.concat(temp, _.filter(articles, a => !_.some(temp, { item_id: a.item_id })));
-            if (combined.length < Max_Length){
+            if (combined.length < Max_Length) {
                 await timeout(random(Request_Interval_Min, Request_Interval_Max));
                 return await startRecursiveRequest(category, combined, max_behot_time)
             }
             else
                 return combined;
-    
+
         }
         catch (e) {
             console.error(category, e);
@@ -91,9 +88,9 @@ const getArticlesForSave = async (category) => {
 
 const startCrawlers = async () => {
     let tempData = [];
-    while(true) {
-        try{
-            for(var i = 0; i < categories.length; i++){
+    while (true) {
+        try {
+            for (var i = 0; i < categories.length; i++) {
                 tempData = [];
                 await timeout(random(Request_Interval_Min, Request_Interval_Max));
                 console.log(`Start fetch ${categories[i]} data...`);
@@ -102,7 +99,7 @@ const startCrawlers = async () => {
                 console.log(`Fetch ${categories[i]} finish, total count: ${tempData.length}`);
             }
         }
-        catch(e){
+        catch (e) {
             console.error(e);
         }
     }
